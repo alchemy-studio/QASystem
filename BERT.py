@@ -6,7 +6,7 @@ from bert import BertModelLayer;
 from bert.loader import StockBertConfig, load_stock_weights;
 from bert.tokenization import FullTokenizer;
 
-def BERT(max_seq_len = 128, bert_model_dir = 'models/chinese_L-12_H-768_A-12'):
+def BERT(max_seq_len = 128, bert_model_dir = 'models/chinese_L-12_H-768_A-12', do_lower_case = False):
 
     # load bert parameters
     with tf.io.gfile.GFile(os.path.join(bert_model_dir, "bert_config.json"), "r") as reader:
@@ -25,6 +25,6 @@ def BERT(max_seq_len = 128, bert_model_dir = 'models/chinese_L-12_H-768_A-12'):
     # load bert layer weights
     load_stock_weights(bert, os.path.join(bert_model_dir, "bert_model.ckpt"));
     # create tokenizer, chinese character needs no lower case.
-    tokenizer = FullTokenizer(vocab_file = os.path.join(bert_model_dir, "vocab.txt"), do_lower_case = False);
+    tokenizer = FullTokenizer(vocab_file = os.path.join(bert_model_dir, "vocab.txt"), do_lower_case = do_lower_case);
     return model, tokenizer;
 
