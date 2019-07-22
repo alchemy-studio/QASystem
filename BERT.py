@@ -4,6 +4,7 @@ import os;
 import tensorflow as tf;
 from bert import BertModelLayer;
 from bert.loader import StockBertConfig, load_stock_weights;
+from bert.tokenization import FullTokenizer;
 
 def BERT(max_seq_len = 128, bert_model_dir = 'models/chinese_L-12_H-768_A-12'):
 
@@ -23,5 +24,7 @@ def BERT(max_seq_len = 128, bert_model_dir = 'models/chinese_L-12_H-768_A-12'):
     model.build(input_shape = [(None, max_seq_len), (None, max_seq_len)]);
     # load bert layer weights
     load_stock_weights(bert, os.path.join(bert_model_dir, "bert_model.ckpt"));
-    return model;
+    # create tokenizer
+    tokenizer = FullTokenizer(vocab_file = os.path.join(bert_model_dir, "vocab.txt"));
+    return model, tokenizer;
 
