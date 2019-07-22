@@ -2,7 +2,6 @@
 
 import tensorflow as tf;
 from BERT import BERT;
-from bert.tokenization import FullTokenizer;
 
 class Predictor(object):
 

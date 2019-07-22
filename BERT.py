@@ -24,7 +24,7 @@ def BERT(max_seq_len = 128, bert_model_dir = 'models/chinese_L-12_H-768_A-12'):
     model.build(input_shape = [(None, max_seq_len), (None, max_seq_len)]);
     # load bert layer weights
     load_stock_weights(bert, os.path.join(bert_model_dir, "bert_model.ckpt"));
-    # create tokenizer
-    tokenizer = FullTokenizer(vocab_file = os.path.join(bert_model_dir, "vocab.txt"));
+    # create tokenizer, chinese character needs no lower case.
+    tokenizer = FullTokenizer(vocab_file = os.path.join(bert_model_dir, "vocab.txt"), do_lower_case = False);
     return model, tokenizer;
 
