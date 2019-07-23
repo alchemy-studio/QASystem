@@ -13,8 +13,10 @@ class Predictor(object):
         self.bert, self.tokenizer = BERT(max_seq_len = max_seq_len);
         # get vocabulary size
         self.vocab_size = sum(1 for e in self.tokenizer.vocab.items());
+        # save max sequence length
+        self.max_seq_len = max_seq_len;
 
-    def read_tsv(self, inputfile):
+    def _read_tsv(self, inputfile):
 
         with tf.io.gfile.GFile(inputfile, "r") as f:
             reader = csv.reader(f, delimiter = '\t');
@@ -23,7 +25,7 @@ class Predictor(object):
                 lines.append(line);
             return lines;
 
-    def create_dataset(self, examples):
+    def _create_classifier_examples(self, examples):
 
         dataset = [];
         for line in examples:
@@ -33,13 +35,55 @@ class Predictor(object):
             dataset.append((question,answer,label));
         return dataset;
 
-    def get_examples(self, data_dir = None):
+    def create_classifier_datasets(self, data_dir = None, output_file = None):
 
         assert type(data_dir) is str;
-        train_examples = self.read_tsv(os.path.join(data_dir, "train.tsv"));
-        test_examples = self.read_tsv(os.path.join(data_dir, "test.tsv"));
-        trainset = self.create_dataset(train_examples);
-        testset = self.create_dataset(test_examples);
+        train_examples = self._read_tsv(os.path.join(data_dir, "train.tsv"));
+        test_examples = self._read_tsv(os.path.join(data_dir, "test.tsv"));
+        trainset = self._create_classifier_examples(train_examples);
+        testset = self._create_classifier_examples(test_examples);
+        # write to tfrecord
+        writer = tf.io.TFRecordWriter(output_file);
+        for example in trainset:
+            # tokenize question and answer.
+            tokens_question = self.tokenizer.tokenize(example[0]);
+            tokens_answer = self.tokenizer.tokenize(example[1]);
+            # truncate to max seq len.
+            while True:
+                total_length = len(tokens_question) + len(tokens_answer);
+                if total_length <= self.max_seq_len: break;
+                if len(tokens_question) > len(tokens_answer): tokens_question.pop();
+                else: tokens_answer.pop();
+            tokens = [];
+            segment_ids = [];
+            # insert question segment
+            tokens.append('[CLS]');
+            segment_ids.append(0);
+            for token in tokens_question:
+                tokens.append(token);
+                segment_ids.append(0);
+            tokens.append('[SEP]');
+            segment_ids.append(0);
+            # insert answer segment
+            for token in tokens_answer:
+                tokens.append(token);
+                segment_ids.append(1);
+            tokens.append('[SEP]');
+            segment_ids.append(1);
+            # tokenize into input_ids
+            input_ids = self.tokenizer.convert_tokens_to_ids(tokens);
+            # mask the valid token
+            input_mask = [1] * len(input_ids);
+            # padding 0
+            while len(input_ids) < self.max_seq_len:
+                input_ids.append(0);
+                input_mask.append(0);
+                segment_ids.append(0);
+            assert len(input_ids) == self.max_seq_len;
+            assert len(input_mask) == self.max_seq_len;
+            assert len(segment_ids) == self.max_seq_len;
+            #TODO
+
         return trainset, testset;
 
     def train_classifier(self, data_dir = None, batch = 32, epoch = 3):
@@ -72,7 +116,7 @@ class Predictor(object):
     @tf.function
     def classify(self, inputs, mask):
 
-        # the first element of output hidden sequence.
+        # the first element of output sequence.
         outputs = self.bert(inputs, mask, True);
         # first_token.shape = (batch, hidden_size)
         first_token = outputs[:,0,:];
