@@ -153,10 +153,11 @@ class Predictor(object):
         # the first element of output sequence.
         outputs = self.bert(inputs, mask, training);
         # first_token.shape = (batch, hidden_size)
-        first_token = outputs[:,0,:];
+        first_token = tf.keras.layers.Lambda(lambda seq: seq[:, 0, :])(outputs);
+        first_token = tf.keras.Dropout(rate = 0.5)(first_token);
         pooled_output = tf.keras.layers.Dense(units = first_token.shape[-1], activation = tf.math.tanh)(first_token);
-        dropout = tf.keras.layers.Dropout(rate = 0.1)(pooled_output);
-        logits = tf.keras.layers.Dense(units = 2)(dropout);
+        dropout = tf.keras.layers.Dropout(rate = 0.5)(pooled_output);
+        logits = tf.keras.layers.Dense(units = 2, activation = tf.nn.softmax)(dropout);
 
         return logits;
 
