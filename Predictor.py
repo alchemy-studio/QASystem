@@ -132,7 +132,7 @@ class Predictor(object):
         for epoch in range(3):
             for features in datasets:
                 with tf.GradientTape() as tape:
-                    logits = self._classify([features['input_ids'], features['segment_ids']], features['input_mask'], True);
+                    logits = self._classify([features['input_ids'], features['segment_ids']], features['input_mask']);
                     loss = tf.keras.losses.CategoricalCrossentropy(from_logits = True)(features['label_ids'], logits);
                 avg_loss.update_state(loss);
                 # write log
@@ -148,10 +148,10 @@ class Predictor(object):
         # save network structure with weight at last.
         self.bert.save('bert.h5');
 
-    def _classify(self, inputs, mask, training = None):
+    def _classify(self, inputs, mask):
 
         # the first element of output sequence.
-        outputs = self.bert(inputs, mask, training);
+        outputs = self.bert([inputs, mask]);
         # first_token.shape = (batch, hidden_size)
         first_token = tf.keras.layers.Lambda(lambda seq: seq[:, 0, :])(outputs);
         first_token = tf.keras.Dropout(rate = 0.5)(first_token);
@@ -164,10 +164,11 @@ class Predictor(object):
     def predict(self, question, answer):
 
         input_ids, input_mask, segment_ids = self._preprocess(question, answer);
-        input_ids = tf.constant(input_ids, dtype = tf.int32);
-        input_mask = tf.constant(input_mask, dtype = tf.int32);
-        segment_ids = tf.constant(segment_ids, dtype = tf.int32);
-        logits = self._classify([input_ids, segment_ids], input_mask, False);
+        # add batch dim.
+        input_ids = tf.expand_dims(tf.constant(input_ids, dtype = tf.int32),0);
+        input_mask = tf.expand_dims(tf.constant(input_mask, dtype = tf.int32),0);
+        segment_ids = tf.expand_dims(tf.constant(segment_ids, dtype = tf.int32),0);
+        logits = self._classify([input_ids, segment_ids], input_mask);
         probabilities = tf.nn.softmax(logits);
         out = tf.math.argmax(probabilities);
         return out;
