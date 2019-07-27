@@ -49,6 +49,7 @@ def BERTClassifier(max_seq_len = 128, bert_model_dir = 'models/chinese_L-12_H-76
     load_stock_weights(bert, os.path.join(bert_model_dir, "bert_model.ckpt"));
     # freeze_bert_layers
     freeze_bert_layers(bert);
+    model.compile(optimizer = tf.keras.optimizers.Adam(2e-5), loss = tf.keras.losses.SparseCategoricalCrossentropy(from_logits = True), metrics = [tf.keras.metrics.SparseCategoricalAccuracy(name = 'accuracy')]);
     # create tokenizer, chinese character needs no lower case.
     tokenizer = FullTokenizer(vocab_file = os.path.join(bert_model_dir, "vocab.txt"), do_lower_case = do_lower_case);
     return model, tokenizer;

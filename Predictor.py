@@ -132,7 +132,7 @@ class Predictor(object):
         for epoch in range(3):
             for features in datasets:
                 with tf.GradientTape() as tape:
-                    logits = self.classifier([features['input_ids'], features['segment_ids']]);
+                    logits = self.classifier.predict([features['input_ids'], features['segment_ids']]);
                     loss = tf.keras.losses.CategoricalCrossentropy(from_logits = True)(features['label_ids'], logits);
                 avg_loss.update_state(loss);
                 # write log
