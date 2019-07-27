@@ -3,7 +3,7 @@
 import os;
 import csv;
 import tensorflow as tf;
-from BERT import BERT;
+from BERT import BERTClassifier;
 
 # NOTE: only member functions without under score prefix are mean for users.
 
@@ -12,7 +12,7 @@ class Predictor(object):
     def __init__(self, max_seq_len = 128):
 
         # create bert object and tokenizer
-        self.bert, self.tokenizer = BERT(max_seq_len = max_seq_len);
+        self.classifier, self.tokenizer = BERTClassifier(max_seq_len = max_seq_len);
         # save max sequence length
         self.max_seq_len = max_seq_len;
 
@@ -132,7 +132,7 @@ class Predictor(object):
         for epoch in range(3):
             for features in datasets:
                 with tf.GradientTape() as tape:
-                    logits = self._classify([features['input_ids'], features['segment_ids']], features['input_mask']);
+                    logits = self.classifier([features['input_ids'], features['segment_ids']]);
                     loss = tf.keras.losses.CategoricalCrossentropy(from_logits = True)(features['label_ids'], logits);
                 avg_loss.update_state(loss);
                 # write log
@@ -148,29 +148,14 @@ class Predictor(object):
         # save network structure with weight at last.
         self.bert.save('bert.h5');
 
-    def _classify(self, inputs, mask):
-
-        # the first element of output sequence.
-        outputs = self.bert([inputs, mask]);
-        # first_token.shape = (batch, hidden_size)
-        first_token = tf.keras.layers.Lambda(lambda seq: seq[:, 0, :])(outputs);
-        first_token = tf.keras.Dropout(rate = 0.5)(first_token);
-        pooled_output = tf.keras.layers.Dense(units = first_token.shape[-1], activation = tf.math.tanh)(first_token);
-        dropout = tf.keras.layers.Dropout(rate = 0.5)(pooled_output);
-        logits = tf.keras.layers.Dense(units = 2, activation = tf.nn.softmax)(dropout);
-
-        return logits;
-
     def predict(self, question, answer):
 
         input_ids, input_mask, segment_ids = self._preprocess(question, answer);
         # add batch dim.
         input_ids = tf.expand_dims(tf.constant(input_ids, dtype = tf.int32),0);
-        input_mask = tf.expand_dims(tf.constant(input_mask, dtype = tf.int32),0);
         segment_ids = tf.expand_dims(tf.constant(segment_ids, dtype = tf.int32),0);
-        logits = self._classify([input_ids, segment_ids], input_mask);
-        probabilities = tf.nn.softmax(logits);
-        out = tf.math.argmax(probabilities);
+        logits = self.classifier.predict([input_ids, segment_ids]);
+        out = tf.math.argmax(logits, axis = -1)[0];
         return out;
 
 if __name__ == "__main__":
