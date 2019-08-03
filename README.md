@@ -5,8 +5,9 @@ this is a QASystem implemented with BERT
 
 install with command
 
-```python
+```bash
 pip3 install -U tf-nightly-2.0-preview bert-for-tf2
+sudo apt install libboost-all-dev
 ```
 
 # collect question and answer pairs
