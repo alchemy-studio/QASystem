@@ -116,9 +116,9 @@ class Predictor(object):
         );
         for name in list(feature.keys()):
             feature[name] = tf.cast(feature[name], dtype = tf.int32);
-        return feature;
+        return (feature['input_ids'], feature['segment_ids']), feature['label_ids'];
 
-    def finetune_classifier(self, data_dir = None, batch = 32, epoch = 3):
+    def finetune_classifier(self, data_dir = None, batch = 32, epochs = 3):
 
         assert type(data_dir) is str;
         # create dataset in tfrecord format.
@@ -127,26 +127,9 @@ class Predictor(object):
         trainset = tf.data.TFRecordDataset('trainset.tfrecord').map(self._classifier_input_fn).batch(batch).repeat().shuffle(buffer_size = 100);
         # finetune the bert model
         optimizer = tf.keras.optimizers.Adam(2e-5);
-        log = tf.summary.create_file_writer('classifier');
-        avg_loss = tf.keras.metrics.Mean(name = 'loss', dtype = tf.float32);
-        for e in range(epoch):
-            for features in trainset:
-                with tf.GradientTape() as tape:
-                    logits = self.classifier.predict([features['input_ids'], features['segment_ids']]);
-                    loss = tf.keras.losses.SparseCategoricalCrossentropy(from_logits = True)(features['label_ids'], logits);
-                avg_loss.update_state(loss);
-                # write log
-                if tf.equal(optimizer.iterations % 100, 0):
-                    with log.as_default():
-                        tf.summary.scalar('loss', avg_loss.result(), step = optimizer.iterations);
-                    print('Step #%d Loss: %.6f' % (optimizer.iterations, avg_loss.result()));
-                    avg_loss.reset_states();
-                grads = tape.gradient(loss, self.classifier.trainable_variables);
-                optimizer.apply_gradients(zip(grads, self.classifier.trainable_variables));
-            # save model once every epoch
-            self.classifier.save_weights('classifer/bert_%d.h5' % optimizer.iterations);
-        # save network structure with weight at last.
-        self.classifier.save('bert.h5');
+        self.classifier.fit(trainset, epochs = epochs, steps_per_epoch = 9);
+        # save model
+        self.classifier.save_weights('classifer/bert.h5');
 
     def predict(self, question, answer):
 
