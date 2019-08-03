@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 import os;
+from math import ceil;
 import csv;
 import tensorflow as tf;
 from BERT import BERTClassifier;
@@ -126,10 +127,10 @@ class Predictor(object):
         # load from the tfrecord file
         trainset = tf.data.TFRecordDataset('trainset.tfrecord').map(self._classifier_input_fn).batch(batch).repeat().shuffle(buffer_size = 100);
         # finetune the bert model
-        optimizer = tf.keras.optimizers.Adam(2e-5);
-        self.classifier.fit(trainset, epochs = epochs, steps_per_epoch = 9);
+        steps_per_epoch = ceil(len(list(trainset)) / batch);
+        self.classifier.fit(trainset, epochs = epochs, steps_per_epoch = steps_per_epoch);
         # save model
-        self.classifier.save_weights('classifer/bert.h5');
+        self.classifier.save_weights('bert.h5');
 
     def predict(self, question, answer):
 
