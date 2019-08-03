@@ -14,6 +14,8 @@ class Predictor(object):
 
         # create bert object and tokenizer
         self.classifier, self.tokenizer = BERTClassifier(max_seq_len = max_seq_len);
+        # load finetune parameters if it exists
+        if (os.path.exists('bert.h5')): self.classifier.load_weights('bert.h5');
         # save max sequence length
         self.max_seq_len = max_seq_len;
 
