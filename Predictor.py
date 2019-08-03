@@ -121,7 +121,7 @@ class Predictor(object):
             feature[name] = tf.cast(feature[name], dtype = tf.int32);
         return (feature['input_ids'], feature['segment_ids']), feature['label_ids'];
 
-    def finetune_classifier(self, data_dir = None, batch = 32, epochs = 3):
+    def finetune(self, data_dir = None, batch = 32, epochs = 3):
 
         assert type(data_dir) is str;
         # create dataset in tfrecord format.
@@ -148,6 +148,5 @@ if __name__ == "__main__":
 
     assert tf.executing_eagerly();
     predictor = Predictor();
-    #print(predictor.predict('今天天气如何？','感觉今天天气很不错。'));
-    predictor.finetune_classifier('dataset');
+    predictor.finetune('dataset');
 
