@@ -42,8 +42,6 @@ class Predictor(object):
         test_examples = self._read_tsv(os.path.join(data_dir, "test.tsv"));
         trainset = self._create_classifier_examples(train_examples);
         testset = self._create_classifier_examples(test_examples);
-        write_tfrecord(trainset, "trainset.tfrecord");
-        write_tfrecord(testset, "testset.tfrecord");
         def write_tfrecord(dataset, output_file):
             # write to tfrecord
             writer = tf.io.TFRecordWriter(output_file);
@@ -55,11 +53,13 @@ class Predictor(object):
                         "input_ids": tf.train.Feature(int64_list = tf.train.Int64List(value = list(input_ids))),
                         "input_mask": tf.train.Feature(int64_list = tf.train.Int64List(value = list(input_mask))),
                         "segment_ids": tf.train.Feature(int64_list = tf.train.Int64List(value = list(segment_ids))),
-                        "label_ids": tf.train.Feature(int64_list = tf.train.Int64List(value = list(example[2])))
+                        "label_ids": tf.train.Feature(int64_list = tf.train.Int64List(value = [example[2]]))
                     }
                 ));
                 writer.write(tf_example.SerializeToString());
             writer.close();
+        write_tfrecord(trainset, "trainset.tfrecord");
+        write_tfrecord(testset, "testset.tfrecord");
 
     def _preprocess(self, question, answer):
 
@@ -69,7 +69,7 @@ class Predictor(object):
         # truncate to max seq len.
         while True:
             total_length = len(tokens_question) + len(tokens_answer);
-            if total_length <= self.max_seq_len: break;
+            if total_length <= self.max_seq_len - 3: break;
             if len(tokens_question) > len(tokens_answer): tokens_question.pop();
             else: tokens_answer.pop();
         tokens = [];
@@ -124,16 +124,16 @@ class Predictor(object):
         # create dataset in tfrecord format.
         self._create_classifier_datasets(data_dir);
         # load from the tfrecord file
-        trainset = tf.data.TFRecordDataset('trainset.tfrecord').map(self._classifier_input_fn).repeat().shuffle(buffer_size = 100);
+        trainset = tf.data.TFRecordDataset('trainset.tfrecord').map(self._classifier_input_fn).batch(batch).repeat().shuffle(buffer_size = 100);
         # finetune the bert model
-        optimizer = tf.keras.optimizer.Adam(2e-5);
+        optimizer = tf.keras.optimizers.Adam(2e-5);
         log = tf.summary.create_file_writer('classifier');
         avg_loss = tf.keras.metrics.Mean(name = 'loss', dtype = tf.float32);
-        for epoch in range(3):
-            for features in datasets:
+        for e in range(epoch):
+            for features in trainset:
                 with tf.GradientTape() as tape:
                     logits = self.classifier.predict([features['input_ids'], features['segment_ids']]);
-                    loss = tf.keras.losses.CategoricalCrossentropy(from_logits = True)(features['label_ids'], logits);
+                    loss = tf.keras.losses.SparseCategoricalCrossentropy(from_logits = True)(features['label_ids'], logits);
                 avg_loss.update_state(loss);
                 # write log
                 if tf.equal(optimizer.iterations % 100, 0):
@@ -141,12 +141,12 @@ class Predictor(object):
                         tf.summary.scalar('loss', avg_loss.result(), step = optimizer.iterations);
                     print('Step #%d Loss: %.6f' % (optimizer.iterations, avg_loss.result()));
                     avg_loss.reset_states();
-                grads = tape.gradient(loss, self.bert.trainable_variables);
-                optimizer.apply_gradients(zip(grads, self.bert.trainable_variables));
+                grads = tape.gradient(loss, self.classifier.trainable_variables);
+                optimizer.apply_gradients(zip(grads, self.classifier.trainable_variables));
             # save model once every epoch
-            self.bert.save_weights('classifer/bert_%d.h5' % optimizer.iterations);
+            self.classifier.save_weights('classifer/bert_%d.h5' % optimizer.iterations);
         # save network structure with weight at last.
-        self.bert.save('bert.h5');
+        self.classifier.save('bert.h5');
 
     def predict(self, question, answer):
 
@@ -162,4 +162,6 @@ if __name__ == "__main__":
 
     assert tf.executing_eagerly();
     predictor = Predictor();
-    print(predictor.predict('今天天气如何？','感觉很不错！'));
+    #print(predictor.predict('今天天气如何？','感觉今天天气很不错。'));
+    predictor.finetune_classifier('dataset');
+
