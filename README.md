@@ -10,6 +10,13 @@ pip3 install -U tf-nightly-2.0-preview bert-for-tf2
 sudo apt install libboost-all-dev
 ```
 
+# download pretrained bert model for Chinese language
+
+download with the following command.
+```bash
+bash downloads.sh
+```
+
 # collect question and answer pairs
 
 put the questions and answers in format as question_answer.txt's. and execute following command to convert the collected samples into dataset format.
