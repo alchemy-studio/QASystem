@@ -61,6 +61,8 @@ class Predictor(object):
             writer.close();
         write_tfrecord(trainset, "trainset.tfrecord");
         write_tfrecord(testset, "testset.tfrecord");
+        self.trainset_size = len(trainset);
+        self.testset_size = len(testset);
 
     def _preprocess(self, question, answer):
 
@@ -127,7 +129,7 @@ class Predictor(object):
         # load from the tfrecord file
         trainset = tf.data.TFRecordDataset('trainset.tfrecord').map(self._classifier_input_fn).batch(batch).repeat().shuffle(buffer_size = 100);
         # finetune the bert model
-        steps_per_epoch = ceil(len(list(trainset)) / batch);
+        steps_per_epoch = ceil(self.trainset_size / batch);
         self.classifier.fit(trainset, epochs = epochs, steps_per_epoch = steps_per_epoch);
         # save model
         self.classifier.save_weights('bert.h5');
