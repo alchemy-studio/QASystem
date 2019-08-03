@@ -15,7 +15,7 @@ put the questions and answers in format as question_answer.txt's. and execute fo
 
 ```bash
 g++ convert.cpp -lboost_filesystem -lboost_system -lboost_program_options -lboost_regex -o convert
-./convert -i question_answer.txt -o samples.txt
+./convert -i question_answer.txt -o dataset
 ```
 
 
