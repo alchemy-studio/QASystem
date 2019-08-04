@@ -3,6 +3,7 @@
 #include <string>
 #include <fstream>
 #include <vector>
+#include <set>
 #include <boost/program_options.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/algorithm/string.hpp>
@@ -61,6 +62,7 @@ int main(int argc, char ** argv) {
     (dict_root/"stop_words.utf8").string()
   );
   vector<std::tuple<string, string, map<string, unsigned int> > > qa;
+  map<string, unsigned int> df;
   long long length_sum = 0;
   regex sample("(.+)\\t(.+)");
   while(false == in.eof()) {
@@ -79,20 +81,26 @@ int main(int argc, char ** argv) {
       // tokenize the question
       vector<string> words;
       tokenizer.CutForSearch(question, words);
-      // insert into inverse index
+      // get term frequency
       map<string, unsigned int> tf;
       for (auto word: words) {
         tf[word]++;
       }
+      // update document frequency
+      set<string> tokens(words.begin(), words.end());
+      for (auto token: tokens) {
+        df[token]++;
+      }
       // insert into qa database
       qa.push_back(std::make_tuple(question, answer, tf));
+      // update average length
       length_sum += question.size();
     }
   }
   long long avg_length = length_sum / qa.size();
   std::ofstream out("database.dat");
   text_oarchive oa(out);
-  oa << qa << avg_length;
+  oa << qa << df << avg_length;
   
   return EXIT_SUCCESS;
 }
