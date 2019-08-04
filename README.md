@@ -22,7 +22,7 @@ bash downloads.sh
 put the questions and answers in format as question_answer.txt's. and execute following command to convert the collected samples into dataset format.
 
 ```bash
-g++ convert.cpp -lboost_filesystem -lboost_system -lboost_program_options -lboost_regex -o convert
+make
 ./convert -i question_answer.txt -o dataset
 ```
 
