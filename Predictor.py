@@ -146,7 +146,7 @@ class Predictor(object):
         segment_ids = tf.expand_dims(tf.constant(segment_ids, dtype = tf.int32),0);
         logits = self.classifier.predict([input_ids, segment_ids]);
         out = tf.math.argmax(logits, axis = -1)[0];
-        return out;
+        return int(out.numpy()), float(logits[0][1]);
 
 if __name__ == "__main__":
 

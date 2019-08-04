@@ -105,18 +105,27 @@ int main(int argc, char ** argv) {
     python::object predictor = Predictor();
     string line;
     while (1) {
+      cout<<"question?>";
       cin>>line;
       trim(line);
+      if ("quit" == line) {
+	cout<<"quiting..."<<endl;
+	break;
+      }
       // search engine search for items above threshold
-      vector<pair<string, float> > candidate_answers;
+      vector<std::tuple<string, float, float> > candidate_answers;
       for (int i = 0 ; i < tf.size() ; i++) {
-	if(bm25(line, i) > 0.1) candidate_answers.push_back(make_pair(get<1>(tf[i]),0));
+	float match_score = bm25(line, i);
+	python::tuple retval = python::extract<python::tuple>(predictor.attr("predict")(line,get<1>(tf[i])));
+	float relevance_score = python::extract<float>(retval[1]);
+	candidate_answers.push_back(std::make_tuple(get<1>(tf[i]), match_score, relevance_score));
       }
-      // get relevance between the user given question and answers.
-      for (auto answer: candidate_answers) {
-	predictor.attr("predict")(line,answer.first);
+      // sort in descend order
+      sort(candidate_answers.begin(),candidate_answers.end(),[](const auto& a, const auto& b) {return std::get<1>(a) + std::get<2>(a) > std::get<1>(b) + std::get<2>(b);});
+      // print answers
+      for (int i = 0 ; i < 3 && i < candidate_answers.size() ; i++) {
+	cout<<"("<<std::get<1>(candidate_answers[i]) + std::get<2>(candidate_answers[i])<<")"<<std::get<0>(candidate_answers[i])<<endl;
       }
-      break;
     }
   } catch (const python::error_already_set&) {
     cerr<<"Python error occurred: "<<endl;
