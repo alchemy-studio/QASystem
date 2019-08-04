@@ -23,7 +23,7 @@ put the questions and answers in format as question_answer.txt's. and execute fo
 
 ```bash
 make
-./convert -i question_answer.txt -o dataset
+./create_dataset -i question_answer.txt -o dataset
 ```
 
 # finetune bert classifer to predict relavance between question and answer correctly
