@@ -14,6 +14,7 @@
 #include <boost/serialization/vector.hpp>
 #include <boost/serialization/string.hpp>
 #include <boost/archive/text_iarchive.hpp>
+#include <boost/algorithm/string.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/python.hpp>
 #include "cppjieba/Jieba.hpp"
@@ -102,7 +103,21 @@ int main(int argc, char ** argv) {
     python::object Predictor_module = import("Predictor", "Predictor.py", globals);
     python::object Predictor = Predictor_module.attr("Predictor");
     python::object predictor = Predictor();
-    predictor.attr("predict")();
+    string line;
+    while (1) {
+      cin>>line;
+      trim(line);
+      // search engine search for items above threshold
+      vector<pair<string, float> > candidate_answers;
+      for (int i = 0 ; i < tf.size() ; i++) {
+	if(bm25(line, i) > 0.1) candidate_answers.push_back(make_pair(get<1>(tf[i]),0));
+      }
+      // get relevance between the user given question and answers.
+      for (auto answer: candidate_answers) {
+	predictor.attr("predict")(line,answer.first);
+      }
+      break;
+    }
   } catch (const python::error_already_set&) {
     cerr<<"Python error occurred: "<<endl;
     PyErr_Print();
