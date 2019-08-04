@@ -15,6 +15,7 @@
 #include <boost/serialization/string.hpp>
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/filesystem.hpp>
+#include <boost/python.hpp>
 #include "cppjieba/Jieba.hpp"
 
 using namespace std;
@@ -23,7 +24,10 @@ using namespace boost::program_options;
 using namespace boost::serialization;
 using namespace boost::archive;
 using namespace boost::filesystem;
+using namespace boost::python;
 using namespace cppjieba;
+
+python::object import(const string& module, const string& path, python::object& globals);
 
 int main(int argc, char ** argv) {
   string dict_path;
@@ -67,6 +71,7 @@ int main(int argc, char ** argv) {
     (dict_root/"idf.utf8").string(),
     (dict_root/"stop_words.utf8").string()
   );
+  // Refer to https://en.wikipedia.org/wiki/Okapi_BM25
   std::function<float(string, unsigned int)> bm25([&](string query, unsigned int index) -> float {
     if (index >= tf.size()) {
       throw logic_error("index out of bound!");
@@ -88,8 +93,35 @@ int main(int argc, char ** argv) {
     });
     return score;
   });
+  // query answer loop
+  try {
+    Py_Initialize();
+    python::object main = python::import("__main__");
+    python::object globals = main.attr("__dict__");
+    python::object BERT_module = import("BERT", "BERT.py", globals);
+    python::object Predictor_module = import("Predictor", "Predictor.py", globals);
+    python::object Predictor = Predictor_module.attr("Predictor");
+    python::object predictor = Predictor();
+    predictor.attr("predict")();
+  } catch (const python::error_already_set&) {
+    cerr<<"Python error occurred: "<<endl;
+    PyErr_Print();
+    exit(1);
+  }
+  Py_Finalize();
   
   return EXIT_SUCCESS;
+}
+
+python::object import(const string& module, const string& path, python::object& globals) {
+  python::dict locals;
+  locals["module_name"] = module;
+  locals["path"] = path;
+  python::exec("import imp\n"
+	       "new_module = imp.load_module(module_name, open(path), path, ('py', 'U', imp.PY_SOURCE))\n",
+	       globals,
+	       locals);
+  return locals["new_module"];
 }
 
 namespace boost {
