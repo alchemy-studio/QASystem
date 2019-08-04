@@ -42,3 +42,14 @@ generate the database with command
 
 the generated database is save in file database.dat.
 
+# test the QASystem
+
+run the QA system by
+```bash
+./QASystem
+```
+quit the QA system by enter quit.
+
+![capture](pics/qasystem.png)
+
+
