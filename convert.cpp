@@ -67,7 +67,7 @@ int main(int argc, char ** argv)
     if (line != "") {
       match_results<string::const_iterator> what;
       if (false == regex_match(line, what, sample)) {
-	throw logic_error("invalid line format for sample!");
+        throw logic_error("invalid line format for sample!");
       }
       string question = string(what[1].begin(), what[1].end());
       string answer = string(what[2].begin(), what[2].end());
