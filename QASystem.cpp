@@ -121,7 +121,7 @@ int main(int argc, char ** argv) {
 	candidate_answers.push_back(std::make_tuple(get<1>(tf[i]), match_score, relevance_score));
       }
       // sort in descend order
-      sort(candidate_answers.begin(),candidate_answers.end(),[](const auto& a, const auto& b) {exp(return std::get<1>(a)) + exp(std::get<2>(a)) > std::get<1>(b) + std::get<2>(b);});
+      sort(candidate_answers.begin(),candidate_answers.end(),[](const auto& a, const auto& b) {return exp(std::get<1>(a)) + exp(std::get<2>(a)) > std::get<1>(b) + std::get<2>(b);});
       // print answers
       for (int i = 0 ; i < 3 && i < candidate_answers.size() ; i++) {
 	cout<<"("<<exp(std::get<1>(candidate_answers[i])) + exp(std::get<2>(candidate_answers[i]))<<")"<<std::get<0>(candidate_answers[i])<<endl;
