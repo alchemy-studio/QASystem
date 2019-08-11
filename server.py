@@ -7,10 +7,10 @@ app = Flask(__name__);
 qasystem = QASystem();
 
 @app.route('/')
-def test():
+def index():
     return 'QASystem server works!';
 
-@app.route('/qasystem', method = ['POST'])
+@app.route('/qasystem', methods = ['POST'])
 def query():
     params = request.get_json();
     question = params['query'];
