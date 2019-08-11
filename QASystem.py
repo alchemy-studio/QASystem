@@ -11,19 +11,19 @@ class QASystem(object):
 
         if exists('database.dat'):
             # deserialize database is much faster.
-            self.sg = SearchEngine('cppjieba/dict');
+            self.search_engine = SearchEngine('cppjieba/dict');
             print('deserialize the QA database...');
-            self.sg.load('database.dat');
+            self.search_engine.load('database.dat');
         else:
             # load database from txt is slower.
             print('load from QA database from txt format...');
-            self.sg = SearchEngine('cppjieba/dict','question_answer.txt');
-            self.sg.save('database.dat');
+            self.search_engine = SearchEngine('cppjieba/dict','question_answer.txt');
+            self.search_engine.save('database.dat');
         self.predictor = Predictor();
 
     def query(self, question, count = 3):
 
-        answer_scores = self.sg.query(question, count);
+        answer_scores = self.search_engine.query(question, count);
         answer_totalscores = dict();
         for answer, match in answer_scores.items():
             _, relevance = self.predictor.predict(question, answer);
