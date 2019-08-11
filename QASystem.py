@@ -31,6 +31,12 @@ class QASystem(object):
         # sort in descend order of total score
         descend = sorted(answer_totalscores, key = operator.itemgetter(1), reverse = True);
         return descend;
+    
+    def updateDB(self, file):
+
+        assert type(file) is str;
+        self.search_engine.loadFromTxt(file);
+        self.search_engine.save('database.dat');
 
 if __name__ == "__main__":
 

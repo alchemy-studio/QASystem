@@ -91,10 +91,8 @@ float SearchEngine::bm25(string question, unsigned int query_index) {
     if (term_iter == term_list_.get<IndexByTerm>().end()) return;
     // 2) get term frequency
     auto term_frequency_iter = term_frequency_list_.get<IndexByQueryIdAndTermId>().find(std::make_tuple(qa_iter->query_index_, term_iter->term_index_));
-    // if the term is being kept track of, the term frequency must have it.
-    if (term_frequency_iter == term_frequency_list_.get<IndexByQueryIdAndTermId>().end()) {
-      throw logic_error("can't find term frequency of the given question!");
-    }
+    // if the current document doesn't have such term.
+    if (term_frequency_iter == term_frequency_list_.get<IndexByQueryIdAndTermId>().end()) return;
     // 3) get doc frequency
     auto doc_frequency_iter = doc_frequency_list_.get<IndexByTermId>().find(term_iter->term_index_);
     // if the term is being kept track of, the doc frequency must have it.
@@ -121,6 +119,14 @@ bool SearchEngine::loadFromTxt(string file) {
     cerr<<"can't open txt file!"<<endl;
     return false;
   }
+  // reset members.
+  qa_list_.clear();
+  term_list_.clear();
+  term_frequency_list_.clear();
+  doc_frequency_list_.clear();
+  next_query_index_ = 0;
+  next_term_index_ = 0;
+  average_question_length_ = 0;
   
   regex sample("(.+)\\t(.+)");
   int length_sum = 0;
