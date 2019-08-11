@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 import operator;
+from math import exp;
 from os.path import exists, join;
 from search_engine import SearchEngine;
 from Predictor import Predictor;
@@ -29,8 +30,8 @@ class QASystem(object):
             _, relevance = self.predictor.predict(question, answer);
             answer_totalscores[answer] = exp(match) + exp(relevance);
         # sort in descend order of total score
-        descend = sorted(answer_totalscores, key = operator.itemgetter(1), reverse = True);
-        return descend;
+        sorted(answer_totalscores, key = operator.itemgetter(1), reverse = True);
+        return answer_totalscores;
     
     def updateDB(self, file):
 
