@@ -41,5 +41,11 @@ FLASK_APP=server.py flask run
 ```
 stop the server by Ctrl+C
 
+# test the server
+
+```bash
+python3 test.py
+```
+
 ![capture](pics/qasystem.png)
 

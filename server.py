@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-from flask import Flask, request;
+from flask import Flask, request, jsonify;
 from QASystem import QASystem;
 
 app = Flask(__name__);
